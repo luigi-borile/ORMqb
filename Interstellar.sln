@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30621.155
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interstellar", "Interstellar\Interstellar.csproj", "{BEBEC559-B8BD-4FFE-90B1-944DD4E7879C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interstellar.Testing", "Interstellar.Testing\Interstellar.Testing.csproj", "{CEA3FAC8-1FCA-4A34-B390-6281F0143FAD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interstellar.SqlServer", "Interstellar.SqlServer\Interstellar.SqlServer.csproj", "{C52C1483-8755-4627-99F4-5A71B37CC623}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{65621EE4-E42F-42C4-B38A-A8EC472E62AF}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BEBEC559-B8BD-4FFE-90B1-944DD4E7879C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEBEC559-B8BD-4FFE-90B1-944DD4E7879C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEBEC559-B8BD-4FFE-90B1-944DD4E7879C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEBEC559-B8BD-4FFE-90B1-944DD4E7879C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CEA3FAC8-1FCA-4A34-B390-6281F0143FAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEA3FAC8-1FCA-4A34-B390-6281F0143FAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEA3FAC8-1FCA-4A34-B390-6281F0143FAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEA3FAC8-1FCA-4A34-B390-6281F0143FAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C52C1483-8755-4627-99F4-5A71B37CC623}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C52C1483-8755-4627-99F4-5A71B37CC623}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C52C1483-8755-4627-99F4-5A71B37CC623}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C52C1483-8755-4627-99F4-5A71B37CC623}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1CB80592-9A9F-4586-B577-2FF9D45CE49B}
+	EndGlobalSection
+EndGlobal
