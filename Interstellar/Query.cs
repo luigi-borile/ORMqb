@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
 
 namespace Interstellar
 {
@@ -12,7 +11,7 @@ namespace Interstellar
         public Query<T> FromQuery<TResult>(Func<Query<TResult>, Query<TResult>> query) => this;
 
         public Query<T> Select<TTable, TValue>(Func<TTable, TValue> expression) => this;
-        public Query<T> Select<TTable, TValue>(Func<TTable, TValue> expression, Expression<Func<T, TValue>> alias) => this;
+        public Query<T> Select<TTable, TValue>(Func<TTable, TValue> expression, Func<T, TValue> alias) => this;
 
         public Query<T> SelectValue<TValue>(Func<TValue> expression) => this;
 

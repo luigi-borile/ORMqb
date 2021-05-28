@@ -55,8 +55,8 @@ namespace Interstellar.Testing
                 //.Select<SaldoTestata, string>(st => "Stab:" + st.Stabilimento, r => r.Stabilimento)
                 //.Select<SaldoTestata, string>(st => "Maga:" + st.Magazzino, r => r.Magazzino)
                 //.Select<SaldoTestata, string>(st => st.Progressivo, r => r.Progressivo)
-                //.Select<SaldoDettaglio, decimal>(sd => sd.QtPezzi, r => r.QtPezzi)
-                .From<SaldoTestata>(st => st)
+                .Select<SaldoDettaglio, decimal>(sd => sd.QtPezzi, r => r.QtPezzi)
+                //.From<SaldoTestata>(st => st)
                 //.Join<SaldoTestata, SaldoDettaglio>((st, sd) =>
                 //    st.Stabilimento == sd.Stabilimento &&
                 //    st.Magazzino == sd.Magazzino &&

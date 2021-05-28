@@ -1,5 +1,4 @@
 ﻿using Interstellar.Compilation;
-using Interstellar.Schema;
 using System;
 using System.Linq;
 using System.Linq.Expressions;
@@ -65,7 +64,10 @@ namespace Interstellar.SqlServer
                 Sql.Append(", ");
             }
 
-            //Visit(node.Object);
+            if (node.Object.NodeType != ExpressionType.Parameter)
+            {
+                Visit(node.Object);
+            }
 
             return node;
         }
@@ -77,12 +79,17 @@ namespace Interstellar.SqlServer
             if (queryParameter != null)
             {
                 _queryType = queryParameter.Type.GenericTypeArguments[0];
-                return Visit(node.Body);
             }
             else
             {
-                return base.VisitLambda(node);
+                if (CurrentClause == Clause.Join)
+                {
+                    string tableSource = SchemaProvider.DbSchema.GetTableSource(node.Parameters[1].Type);
+                    Sql.AppendFormat("{0} AS {1} ON ", tableSource, node.Parameters[1].Name);
+                }
             }
+
+            return Visit(node.Body);
         }
 
         protected override Expression VisitParameter(ParameterExpression node)
@@ -92,24 +99,7 @@ namespace Interstellar.SqlServer
                 return node;
             }
 
-            if (CurrentClause == Clause.From || CurrentClause == Clause.Join)
-            {
-                DbObjectDefinition definition = SchemaProvider.DbSchema.GetDefinition(node.Type);
-                Sql.AppendFormat("{0} AS {1}", definition.Source, node.Name);
-            }
-            else if (CurrentClause == Clause.Select && node.Type == _queryType)
-            {
-                Sql.Append(" AS ");
-            }
-            else
-            {
-                Sql.AppendFormat("{0}.", node.Name);
-            }
-
-            if (CurrentClause == Clause.Join)
-            {
-                Sql.Append(" ON ");
-            }
+            Sql.AppendFormat("{0}.", node.Name);
 
             return node;
         }
@@ -118,14 +108,8 @@ namespace Interstellar.SqlServer
         {
             Visit(node.Expression);
 
-            if (SchemaProvider.DbSchema.TryGetDefinition(node.Member.DeclaringType, out DbObjectDefinition definition))
-            {
-                Sql.Append(definition.Columns[node.Member.Name]);
-            }
-            else
-            {
-                Sql.Append(node.Member.Name);
-            }
+            string columnName = SchemaProvider.DbSchema.GetColumnName(node.Member);
+            Sql.Append(columnName);
 
             return node;
         }
