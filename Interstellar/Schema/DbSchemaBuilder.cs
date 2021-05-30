@@ -20,13 +20,15 @@ namespace Interstellar.Schema
         public DbSchemaDefinition DbSchema =>
             _schemaDefinition.Value;
 
-        public DbSchemaBuilder SchemaFor<T>() =>
-            SchemaFor<T>(buildSchema: null);
-
         public DbSchemaBuilder SchemaFor<T>(Action<DbObjectBuilder<T>> buildSchema)
         {
+            if (buildSchema is null)
+            {
+                throw new ArgumentNullException(nameof(buildSchema));
+            }
+
             var builder = new DbObjectBuilder<T>();
-            buildSchema?.Invoke(builder);
+            buildSchema.Invoke(builder);
 
             _dbObjects.Add(builder.Build());
 
@@ -35,8 +37,13 @@ namespace Interstellar.Schema
 
         public DbSchemaBuilder ForeignKey<TPrimaryTable, TForeignTable>(Action<ForeignKeyBuilder<TPrimaryTable, TForeignTable>> buildForeignKey)
         {
+            if (buildForeignKey is null)
+            {
+                throw new ArgumentNullException(nameof(buildForeignKey));
+            }
+
             var builder = new ForeignKeyBuilder<TPrimaryTable, TForeignTable>();
-            buildForeignKey?.Invoke(builder);
+            buildForeignKey.Invoke(builder);
 
             _foreignKeys.Add(builder.Build());
 

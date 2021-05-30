@@ -4,7 +4,11 @@
     {
         Select,
         From,
+        FromQuery,
         Join,
+        LeftJoin,
+        RightJoin,
+        FullJoin,
         Where
     }
 }

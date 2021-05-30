@@ -9,7 +9,7 @@ namespace Interstellar
             : this(sql, null)
         { }
 
-        public CompileResult(string sql, IReadOnlyList<QueryParameter> parameters)
+        public CompileResult(string sql, IReadOnlyList<QueryParameter>? parameters)
         {
             if (string.IsNullOrWhiteSpace(sql))
             {
@@ -23,7 +23,7 @@ namespace Interstellar
 
         public string Sql { get; }
 
-        public IReadOnlyList<QueryParameter> Parameters { get; }
+        public IReadOnlyList<QueryParameter>? Parameters { get; }
 
         public bool HasParameters { get; }
     }

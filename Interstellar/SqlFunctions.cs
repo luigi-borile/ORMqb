@@ -4,10 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 namespace Interstellar
 {
     [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Class without implementation, used only by ExpressionVisitor")]
-    public sealed class Where
+    public class SqlFunctions
     {
-        public bool Exists(Action<Query<bool>> action) => true;
+        public static int Count(Func<object> expression) => default;
 
-        //public T Select<T>(Func<Query, Query> action) => default;
+        public static bool Exists(Func<Query<bool>, Query<bool>> action) => default;
     }
 }

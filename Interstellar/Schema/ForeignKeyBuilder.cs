@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Interstellar.Schema
 {
@@ -18,8 +19,20 @@ namespace Interstellar.Schema
 
         public ForeignKeyBuilder<TPrimary, TForeign> Column(Expression<Func<TPrimary, object>> property, Expression<Func<TForeign, object>> foreignKey)
         {
-            string pField = property.GetMember().Name;
-            string fField = foreignKey.GetMember().Name;
+            MemberInfo? propMember = property.GetMember();
+            if (propMember is null)
+            {
+                throw new ArgumentException("Unexpected property expression format", nameof(property));
+            }
+
+            MemberInfo? fkMember = foreignKey.GetMember();
+            if (fkMember is null)
+            {
+                throw new ArgumentException("Unexpected foreing key expression format", nameof(property));
+            }
+
+            string pField = propMember.Name;
+            string fField = fkMember.Name;
 
             if (_fields.ContainsKey(pField))
             {

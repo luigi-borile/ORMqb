@@ -52,17 +52,35 @@ namespace Interstellar.Testing
             IQueryFactory factory = new QueryFactory(compiler, executor);
 
             IEnumerable<Result> result = await factory.GetManyAsync<Result>(q => q
-                //.Select<SaldoTestata, string>(st => "Stab:" + st.Stabilimento, r => r.Stabilimento)
-                //.Select<SaldoTestata, string>(st => "Maga:" + st.Magazzino, r => r.Magazzino)
-                //.Select<SaldoTestata, string>(st => st.Progressivo, r => r.Progressivo)
+            .Select<Result, string>(inner => inner.Progressivo, r => r.Progressivo)
+            .FromQuery<Result>(inner => inner
+                .Select<SaldoTestata, string>(st => "Stab:" + st.Stabilimento, r => r.Stabilimento)
+                .Select<SaldoTestata, string>(st => "Maga:" + st.Magazzino, r => r.Magazzino)
+                .Select<SaldoTestata, string>(st => st.Progressivo, r => r.Progressivo)
                 .Select<SaldoDettaglio, decimal>(sd => sd.QtPezzi, r => r.QtPezzi)
-                //.From<SaldoTestata>(st => st)
-                //.Join<SaldoTestata, SaldoDettaglio>((st, sd) =>
-                //    st.Stabilimento == sd.Stabilimento &&
-                //    st.Magazzino == sd.Magazzino &&
-                //    st.Progressivo == sd.Progressivo)
-                //.Where<SaldoDettaglio>((w, sd) => sd.IdLotto != 1)
-                );
+                .From<SaldoTestata>(st => st)
+                .Join<SaldoTestata, SaldoDettaglio>((st, sd) =>
+                    st.Stabilimento == sd.Stabilimento &&
+                    st.Magazzino == sd.Magazzino &&
+                    st.Progressivo == sd.Progressivo)
+                .Where<SaldoDettaglio>(sd => sd.IdLotto != 1)
+                )
+            );
+
+
+            IEnumerable<Result> result2 = await factory.GetManyAsync<Result>(q => q
+                .Select<SaldoTestata, string>(st => st.Progressivo)
+                .From<SaldoTestata>(st => st)
+                .Where<SaldoTestata>(w => SqlFunctions.Exists(e => e
+                    .SelectValue(1)
+                    .From<SaldoDettaglio>(sd => sd)
+                    .Where<SaldoTestata, SaldoDettaglio>((st, sd) =>
+                        st.Stabilimento == sd.Stabilimento &&
+                        st.Magazzino == sd.Magazzino &&
+                        st.Progressivo == sd.Progressivo)
+                    )
+                )
+            );
 
             //IEnumerable<Result2> result = await factory.GetManyAsync<Result2>(q => q
             //    .Select<Result, string>(r => r.Stabilimento, r => r.Progressivo)

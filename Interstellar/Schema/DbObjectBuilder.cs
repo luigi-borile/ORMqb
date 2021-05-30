@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -19,14 +18,13 @@ namespace Interstellar.Schema
 
         public DbObjectDefinition Build()
         {
-            IEnumerable<string> missingFields = typeof(T)
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)
-                .Where(p => !_columns.ContainsKey(p.Name))
-                .Select(p => p.Name);
-
-            foreach (string field in missingFields)
+            if (_definition.Source is null)
             {
-                _columns.Add(field, field);
+                throw new DbObjectDefinitionException($"No source defined for type {typeof(T).Name}");
+            }
+            if (_columns.Count == 0)
+            {
+                throw new DbObjectDefinitionException($"No columns defined for type {typeof(T).Name}");
             }
 
             _definition.Columns = _columns;
@@ -51,7 +49,13 @@ namespace Interstellar.Schema
 
         public DbObjectBuilder<T> Column(Expression<Func<T, object>> property, string name)
         {
-            _columns.Add(property.GetMember().Name, name);
+            MemberInfo? member = property.GetMember();
+            if (member is null)
+            {
+                throw new ArgumentException("Unexpected property expression format", nameof(property));
+            }
+
+            _columns.Add(member.Name, name);
 
             return this;
         }

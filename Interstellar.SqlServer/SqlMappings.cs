@@ -11,7 +11,11 @@ namespace Interstellar.SqlServer
             {
                 { Clause.Select, "SELECT" },
                 { Clause.From, "FROM" },
+                { Clause.FromQuery, "FROM" },
                 { Clause.Join, "INNER JOIN" },
+                { Clause.LeftJoin, "LEFT JOIN" },
+                { Clause.RightJoin, "RIGHT JOIN" },
+                { Clause.FullJoin, "FULL JOIN" },
                 { Clause.Where, "WHERE" }
             };
 

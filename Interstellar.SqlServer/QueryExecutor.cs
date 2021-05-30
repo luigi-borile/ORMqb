@@ -10,7 +10,7 @@ namespace Interstellar.SqlServer
     public class QueryExecutor : QueryExecutorBase, IDisposable
     {
         private readonly SqlConnection _connection;
-        private SqlTransaction _transaction;
+        private SqlTransaction? _transaction;
         private byte _tranCount;
         private bool _disposedValue;
 
@@ -47,7 +47,7 @@ namespace Interstellar.SqlServer
 
             if (_tranCount == 1)
             {
-                _transaction.Commit();
+                _transaction!.Commit();
                 _transaction.Dispose();
                 _transaction = null;
             }
@@ -63,7 +63,7 @@ namespace Interstellar.SqlServer
 
             if (_tranCount == 1)
             {
-                _transaction.Rollback();
+                _transaction!.Rollback();
                 _transaction.Dispose();
                 _transaction = null;
             }
@@ -170,7 +170,7 @@ namespace Interstellar.SqlServer
 
             if (compileResult.HasParameters)
             {
-                foreach (QueryParameter parameter in compileResult.Parameters)
+                foreach (QueryParameter parameter in compileResult.Parameters!)
                 {
                     command.Parameters.Add(MapParameter(parameter));
                 }

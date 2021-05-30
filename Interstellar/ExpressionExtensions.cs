@@ -6,7 +6,7 @@ namespace Interstellar
 {
     internal static class ExpressionExtensions
     {
-        public static MemberInfo GetMember<T, TProperty>(this Expression<Func<T, TProperty>> expression)
+        public static MemberInfo? GetMember<T, TProperty>(this Expression<Func<T, TProperty>> expression)
         {
             if (expression.Body.RemoveUnary() is not MemberExpression memberExp)
             {
