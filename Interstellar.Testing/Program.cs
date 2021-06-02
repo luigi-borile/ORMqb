@@ -51,28 +51,33 @@ namespace Interstellar.Testing
             IQueryExecutor executor = new QueryExecutor("Data Source =.\\; Initial Catalog = EasyStock_Dev; User ID = sa; Password = m4dl4b2013;");
             IQueryFactory factory = new QueryFactory(compiler, executor);
 
-            IEnumerable<Result> result = await factory.GetManyAsync<Result>(q => q
-            .Select<Result, string>(inner => inner.Progressivo, r => r.Progressivo)
-            .FromQuery<Result>(inner => inner
-                .Select<SaldoTestata, string>(st => "Stab:" + st.Stabilimento, r => r.Stabilimento)
-                .Select<SaldoTestata, string>(st => "Maga:" + st.Magazzino, r => r.Magazzino)
-                .Select<SaldoTestata, string>(st => st.Progressivo, r => r.Progressivo)
-                .Select<SaldoDettaglio, decimal>(sd => sd.QtPezzi, r => r.QtPezzi)
-                .From<SaldoTestata>(st => st)
-                .Join<SaldoTestata, SaldoDettaglio>((st, sd) =>
-                    st.Stabilimento == sd.Stabilimento &&
-                    st.Magazzino == sd.Magazzino &&
-                    st.Progressivo == sd.Progressivo)
-                .Where<SaldoDettaglio>(sd => sd.IdLotto != 1)
-                )
-            );
+            //IEnumerable<Result> result1 = await factory.GetManyAsync<Result>(q => q
+            //    .From<SaldoTestata>(st => st)
+            //    .Select<SaldoTestata, string>(st => "xx" + st.Stabilimento, r => r.Stabilimento)
+            //);
+
+            //IEnumerable<Result> result = await factory.GetManyAsync<Result>(q => q
+            //.Select<Result, string>(inner => inner.Progressivo, r => r.Progressivo)
+            //.FromQuery<Result>(inner => inner
+            //    .Select<SaldoTestata, string>(st => "Stab:" + st.Stabilimento, r => r.Stabilimento)
+            //    .Select<SaldoTestata, string>(st => "Maga:" + st.Magazzino, r => r.Magazzino)
+            //    .Select<SaldoTestata, string>(st => st.Progressivo, r => r.Progressivo)
+            //    .Select<SaldoDettaglio, decimal>(sd => sd.QtPezzi, r => r.QtPezzi)
+            //    .From<SaldoTestata>(st => st)
+            //    .Join<SaldoTestata, SaldoDettaglio>((st, sd) =>
+            //        st.Stabilimento == sd.Stabilimento &&
+            //        st.Magazzino == sd.Magazzino &&
+            //        st.Progressivo == sd.Progressivo)
+            //    .Where<SaldoDettaglio>(sd => sd.IdLotto != 1)
+            //    )
+            //);
 
 
             IEnumerable<Result> result2 = await factory.GetManyAsync<Result>(q => q
-                .Select<SaldoTestata, string>(st => st.Progressivo)
+                .Select<SaldoTestata, decimal>(st => SqlFunctions.Count(() => st.Progressivo), r => r.QtPezzi)
                 .From<SaldoTestata>(st => st)
                 .Where<SaldoTestata>(w => SqlFunctions.Exists(e => e
-                    .SelectValue(1)
+                    .Select(1)
                     .From<SaldoDettaglio>(sd => sd)
                     .Where<SaldoTestata, SaldoDettaglio>((st, sd) =>
                         st.Stabilimento == sd.Stabilimento &&

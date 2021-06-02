@@ -33,7 +33,7 @@ namespace Interstellar.Compilation
                     throw new InvalidOperationException($"Cannot use {nameof(CurrentClause)} before calling {nameof(Compile)}");
                 }
 
-                return _context.CurrentClause;
+                return _context.Clause;
             }
             set
             {
@@ -42,7 +42,29 @@ namespace Interstellar.Compilation
                     throw new InvalidOperationException($"Cannot use {nameof(CurrentClause)} before calling {nameof(Compile)}");
                 }
 
-                _context.CurrentClause = value;
+                _context.Clause = value;
+            }
+        }
+
+        protected Function? CurrentFunction
+        {
+            get
+            {
+                if (_context is null)
+                {
+                    throw new InvalidOperationException($"Cannot use {nameof(CurrentFunction)} before calling {nameof(Compile)}");
+                }
+
+                return _context.Function;
+            }
+            set
+            {
+                if (_context is null)
+                {
+                    throw new InvalidOperationException($"Cannot use {nameof(CurrentFunction)} before calling {nameof(Compile)}");
+                }
+
+                _context.Function = value;
             }
         }
 
@@ -75,7 +97,7 @@ namespace Interstellar.Compilation
             }
         }
 
-        protected abstract void PreAppendClause();
+        protected abstract void PreAppendClause(bool firstAppend);
         protected abstract void PostAppendClause();
 
         public CompileResult Compile(Expression query)
@@ -128,14 +150,8 @@ namespace Interstellar.Compilation
 
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (!Enum.TryParse(node.Method.Name, out Clause clause))
-            {
-                throw new QueryCompilerException($"Clause {node.Method.Name} not supported");
-            }
-
-            _context!.CurrentClause = clause;
-
-            PreAppendClause();
+            SetClause(node);
+            PreAppendClause(_context!.FirstAppend);
 
             ParameterInfo[]? methodParameters = node.Method.GetParameters();
 
@@ -146,7 +162,8 @@ namespace Interstellar.Compilation
 
                 Expression? arg = node.Arguments[i];
 
-                if (CurrentClause == Clause.FromQuery)
+                if (CurrentClause == Clause.FromQuery ||
+                    CurrentFunction == Function.Exists)
                 {
                     CompileResult result = Compile(arg);
                     Sql.Append(result.Sql);
@@ -157,17 +174,42 @@ namespace Interstellar.Compilation
                 }
             }
 
+            SetClause(node);
             PostAppendClause();
 
             CurrentParameterType = null;
             CurrentParameterName = null;
 
-            if (node.Object.NodeType != ExpressionType.Parameter)
+            if (node.Object != null &&
+                node.Object.NodeType != ExpressionType.Parameter)
             {
                 Visit(node.Object);
             }
 
             return node;
+        }
+
+        private void SetClause(MethodCallExpression node)
+        {
+            if (typeof(SqlFunctions).IsAssignableFrom(node.Method.DeclaringType))
+            {
+                if (!Enum.TryParse(node.Method.Name, out Function function))
+                {
+                    throw new QueryCompilerException($"Function {node.Method.Name} not supported");
+                }
+
+                CurrentFunction = function;
+            }
+            else
+            {
+                if (!Enum.TryParse(node.Method.Name, out Clause clause))
+                {
+                    throw new QueryCompilerException($"Clause {node.Method.Name} not supported");
+                }
+
+                CurrentClause = clause;
+                CurrentFunction = null;
+            }
         }
     }
 }

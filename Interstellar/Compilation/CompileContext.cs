@@ -4,13 +4,15 @@ using System.Text;
 
 namespace Interstellar.Compilation
 {
-    public sealed class CompileContext
+    internal sealed class CompileContext
     {
         private readonly StringBuilder _selectSql = new();
         private readonly StringBuilder _fromSql = new();
         private readonly StringBuilder _joinSql = new();
         private readonly StringBuilder _whereSql = new();
+        private readonly List<Clause> _addedClauses = new();
         private List<QueryParameter>? _parameters;
+        private Clause _clause;
 
         public CompileContext()
         { }
@@ -22,15 +24,36 @@ namespace Interstellar.Compilation
 
         public List<QueryParameter> Parameters => _parameters ??= new();
 
-        public Clause CurrentClause { get; set; }
+        public bool FirstAppend { get; private set; }
 
-        public StringBuilder Sql => CurrentClause switch
+        public Clause Clause
+        {
+            get => _clause;
+            set
+            {
+                if (_addedClauses.Contains(value))
+                {
+                    FirstAppend = false;
+                }
+                else
+                {
+                    _addedClauses.Add(value);
+                    FirstAppend = true;
+                }
+
+                _clause = value;
+            }
+        }
+
+        public Function? Function { get; set; }
+
+        public StringBuilder Sql => Clause switch
         {
             Clause.Select => _selectSql,
             Clause.From or Clause.FromQuery => _fromSql,
             Clause.Join or Clause.LeftJoin or
             Clause.RightJoin or Clause.FullJoin => _joinSql,
-            Clause.Where or Clause.Exists => _whereSql
+            Clause.Where => _whereSql
         };
 
         public CompileResult GetResult() => new CompileResult(GetSql(), Parameters);

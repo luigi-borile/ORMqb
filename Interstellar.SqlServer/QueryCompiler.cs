@@ -18,18 +18,6 @@ namespace Interstellar.SqlServer
                 Sql.AppendFormat("{0} AS [{1}]", tableSource, node.Parameters[0].Name);
                 return node; //body of from clause is not necessary
             }
-            else if (CurrentClause == Clause.Select)
-            {
-                if (CurrentParameterName == "alias")
-                //if (node.Parameters[0].Type == ResultType)
-                {
-                    Sql.Append(" AS ");
-                }
-                else if (Sql.Length > 7) //contains only select clause
-                {
-                    Sql.Append(", ");
-                }
-            }
             else if (CurrentClause == Clause.Join)
             {
                 string tableSource = SchemaProvider.DbSchema.GetTableSource(node.Parameters[1].Type);
@@ -41,7 +29,14 @@ namespace Interstellar.SqlServer
 
         protected override Expression VisitMember(MemberExpression node)
         {
-            Visit(node.Expression);
+            if (CurrentParameterName == "alias")
+            {
+                Sql.Append(" AS ");
+            }
+            else
+            {
+                Visit(node.Expression);
+            }
 
             string columnName = SchemaProvider.DbSchema.GetColumnName(node.Member);
             Sql.Append(columnName);
@@ -51,10 +46,7 @@ namespace Interstellar.SqlServer
 
         protected override Expression VisitParameter(ParameterExpression node)
         {
-            if (CurrentParameterName != "alias")
-            {
-                Sql.AppendFormat("[{0}].", node.Name);
-            }
+            Sql.AppendFormat("[{0}].", node.Name);
 
             return node;
         }
@@ -103,16 +95,6 @@ namespace Interstellar.SqlServer
             return node;
         }
 
-        protected static LambdaExpression StripQuotes(Expression expression)
-        {
-            Expression e = expression;
-            while (e.NodeType == ExpressionType.Quote)
-            {
-                e = ((UnaryExpression)expression).Operand;
-            }
-            return (LambdaExpression)e;
-        }
-
         protected void AddValue(object value)
         {
             if (value is null)
@@ -132,31 +114,42 @@ namespace Interstellar.SqlServer
             }
         }
 
-        protected override void PreAppendClause()
+        protected override void PreAppendClause(bool firstAppend)
         {
-            if (!SqlMappings.Clauses.TryGetValue(CurrentClause, out string sqlClause))
-            {
-                throw new QueryCompilerException($"Clause {CurrentClause} not mapped");
-            }
-
             bool append = true;
+            string sqlClause;
 
-            switch (CurrentClause)
+            if (CurrentFunction is null)
             {
-                case Clause.Select:
-                case Clause.Where:
-                    if (Sql.Length > 0)
-                    {
-                        append = false;
-                    }
-                    break;
-                case Clause.From:
-                case Clause.FromQuery:
-                    if (Sql.Length > 0)
-                    {
-                        throw new QueryCompilerException("FROM clause specied more then once");
-                    }
-                    break;
+                if (!SqlMappings.Clauses.TryGetValue(CurrentClause, out sqlClause))
+                {
+                    throw new QueryCompilerException($"Clause {CurrentClause} not mapped");
+                }
+
+                switch (CurrentClause)
+                {
+                    case Clause.Select:
+                    case Clause.Where:
+                        if (!firstAppend)
+                        {
+                            append = false;
+                        }
+                        break;
+                    case Clause.From:
+                    case Clause.FromQuery:
+                        if (!firstAppend)
+                        {
+                            throw new QueryCompilerException("FROM clause specied more then once");
+                        }
+                        break;
+                }
+            }
+            else
+            {
+                if (!SqlMappings.Functions.TryGetValue(CurrentFunction.Value, out sqlClause))
+                {
+                    throw new QueryCompilerException($"Function {CurrentFunction} not mapped");
+                }
             }
 
             if (append)
@@ -164,23 +157,28 @@ namespace Interstellar.SqlServer
                 Sql.AppendFormat("{0} ", sqlClause);
 
                 if (CurrentClause == Clause.FromQuery ||
-                    CurrentClause == Clause.Exists)
+                    CurrentFunction is not null)
                 {
                     Sql.Append('(');
                 }
+            }
+
+            if (!firstAppend && CurrentClause == Clause.Select)
+            {
+                Sql.Append(", ");
             }
         }
 
         protected override void PostAppendClause()
         {
-            switch (CurrentClause)
+            if (CurrentClause == Clause.FromQuery)
             {
-                case Clause.FromQuery:
-                    Sql.AppendFormat(") AS [{0}]", QueryAlias);
-                    break;
-                case Clause.Exists:
-                    Sql.Append(')');
-                    break;
+                Sql.AppendFormat(") AS [{0}]", QueryAlias);
+            }
+
+            if (CurrentFunction is not null)
+            {
+                Sql.Append(')');
             }
         }
     }

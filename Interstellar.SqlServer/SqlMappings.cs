@@ -19,6 +19,13 @@ namespace Interstellar.SqlServer
                 { Clause.Where, "WHERE" }
             };
 
+        public static IReadOnlyDictionary<Function, string> Functions { get; } =
+            new Dictionary<Function, string>
+            {
+                { Function.Exists, "EXISTS" },
+                { Function.Count, "COUNT" }
+            };
+
         public static IReadOnlyDictionary<ExpressionType, string> Operands { get; } =
             new Dictionary<ExpressionType, string>
             {

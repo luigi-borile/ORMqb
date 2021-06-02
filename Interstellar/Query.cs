@@ -13,10 +13,10 @@ namespace Interstellar
         public Query<T> Select<TTable, TValue>(Func<TTable, TValue> expression) => this;
         public Query<T> Select<TTable, TValue>(Func<TTable, TValue> expression, Func<T, TValue> alias) => this;
 
-        public Query<T> SelectValue<TValue>(TValue value) => this;
-        public Query<T> SelectValue<TValue>(TValue value, Func<T, TValue> alias) => this;
-        public Query<T> SelectValue<TValue>(Func<TValue> expression) => this;
-        public Query<T> SelectValue<TValue>(Func<TValue> expression, Func<T, TValue> alias) => this;
+        public Query<T> Select<TValue>(TValue value) => this;
+        public Query<T> Select<TValue>(TValue value, Func<T, TValue> alias) => this;
+        public Query<T> Select<TValue>(Func<TValue> expression) => this;
+        public Query<T> Select<TValue>(Func<TValue> expression, Func<T, TValue> alias) => this;
 
         public Query<T> Join<T1, T2>(Func<T1, T2, bool> expression) => this;
         public Query<T> LeftJoin<T1, T2>(Func<T1, T2, bool> expression) => this;
