@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 namespace Interstellar.Compilation
@@ -19,7 +20,9 @@ namespace Interstellar.Compilation
 
         protected ISchemaProvider SchemaProvider { get; }
 
-        protected Type? QueryType { get; private set; }
+        protected Type? ResultType { get; private set; }
+
+        protected string? QueryAlias { get; private set; }
 
         protected Clause CurrentClause
         {
@@ -42,6 +45,9 @@ namespace Interstellar.Compilation
                 _context.CurrentClause = value;
             }
         }
+
+        protected Type? CurrentParameterType { get; private set; }
+        protected string? CurrentParameterName { get; private set; }
 
         protected StringBuilder Sql
         {
@@ -69,6 +75,9 @@ namespace Interstellar.Compilation
             }
         }
 
+        protected abstract void PreAppendClause();
+        protected abstract void PostAppendClause();
+
         public CompileResult Compile(Expression query)
         {
             if (query is not LambdaExpression lambda)
@@ -88,7 +97,8 @@ namespace Interstellar.Compilation
                 throw new QueryCompilerException("Unexpected lambda format. Query parameter type is required");
             }
 
-            QueryType = queryParameter.Type.GenericTypeArguments[0];
+            QueryAlias = queryParameter.Name;
+            ResultType = queryParameter.Type.GenericTypeArguments[0];
 
             CompileContext? prevContext = null;
 
@@ -114,6 +124,50 @@ namespace Interstellar.Compilation
             }
 
             return result;
+        }
+
+        protected override Expression VisitMethodCall(MethodCallExpression node)
+        {
+            if (!Enum.TryParse(node.Method.Name, out Clause clause))
+            {
+                throw new QueryCompilerException($"Clause {node.Method.Name} not supported");
+            }
+
+            _context!.CurrentClause = clause;
+
+            PreAppendClause();
+
+            ParameterInfo[]? methodParameters = node.Method.GetParameters();
+
+            for (int i = 0; i < node.Arguments.Count; i++)
+            {
+                CurrentParameterType = methodParameters[i].ParameterType;
+                CurrentParameterName = methodParameters[i].Name;
+
+                Expression? arg = node.Arguments[i];
+
+                if (CurrentClause == Clause.FromQuery)
+                {
+                    CompileResult result = Compile(arg);
+                    Sql.Append(result.Sql);
+                }
+                else
+                {
+                    Visit(arg);
+                }
+            }
+
+            PostAppendClause();
+
+            CurrentParameterType = null;
+            CurrentParameterName = null;
+
+            if (node.Object.NodeType != ExpressionType.Parameter)
+            {
+                Visit(node.Object);
+            }
+
+            return node;
         }
     }
 }

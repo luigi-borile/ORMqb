@@ -1,5 +1,4 @@
 ﻿using Interstellar.Compilation;
-using System;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -11,51 +10,18 @@ namespace Interstellar.SqlServer
             : base(schemaProvider)
         { }
 
-        protected override Expression VisitMethodCall(MethodCallExpression node)
-        {
-            if (!Enum.TryParse(node.Method.Name, out Clause clause))
-            {
-                throw new QueryCompilerException($"Clause {node.Method.Name} not supported");
-            }
-
-            CurrentClause = clause;
-
-            PreAppendClause();
-
-            foreach (Expression arg in node.Arguments)
-            {
-                if (CurrentClause == Clause.FromQuery)
-                {
-                    CompileResult result = Compile(arg);
-                    Sql.Append(result.Sql);
-                }
-                else
-                {
-                    Visit(arg);
-                }
-            }
-
-            PostAppendClause();
-
-            if (node.Object.NodeType != ExpressionType.Parameter)
-            {
-                Visit(node.Object);
-            }
-
-            return node;
-        }
-
         protected override Expression VisitLambda<T>(Expression<T> node)
         {
             if (CurrentClause == Clause.From)
             {
                 string tableSource = SchemaProvider.DbSchema.GetTableSource(node.Parameters[0].Type);
-                Sql.AppendFormat("{0} AS {1}", tableSource, node.Parameters[0].Name);
+                Sql.AppendFormat("{0} AS [{1}]", tableSource, node.Parameters[0].Name);
                 return node; //body of from clause is not necessary
             }
             else if (CurrentClause == Clause.Select)
             {
-                if (node.Parameters[0].Type == QueryType)
+                if (CurrentParameterName == "alias")
+                //if (node.Parameters[0].Type == ResultType)
                 {
                     Sql.Append(" AS ");
                 }
@@ -67,21 +33,10 @@ namespace Interstellar.SqlServer
             else if (CurrentClause == Clause.Join)
             {
                 string tableSource = SchemaProvider.DbSchema.GetTableSource(node.Parameters[1].Type);
-                Sql.AppendFormat("{0} AS {1} ON ", tableSource, node.Parameters[1].Name);
+                Sql.AppendFormat("{0} AS [{1}] ON ", tableSource, node.Parameters[1].Name);
             }
 
             return Visit(node.Body);
-        }
-
-        protected override Expression VisitParameter(ParameterExpression node)
-        {
-            //if equals to _queryType, I'm writing a select alias.
-            if (node.Type != QueryType)
-            {
-                Sql.AppendFormat("{0}.", node.Name);
-            }
-
-            return node;
         }
 
         protected override Expression VisitMember(MemberExpression node)
@@ -94,14 +49,14 @@ namespace Interstellar.SqlServer
             return node;
         }
 
-        protected override Expression VisitUnary(UnaryExpression node)
+        protected override Expression VisitParameter(ParameterExpression node)
         {
-            if (SqlMappings.Operands.TryGetValue(node.NodeType, out string str))
+            if (CurrentParameterName != "alias")
             {
-                Sql.Append(str);
+                Sql.AppendFormat("[{0}].", node.Name);
             }
 
-            return base.VisitUnary(node);
+            return node;
         }
 
         protected override Expression VisitBinary(BinaryExpression node)
@@ -119,7 +74,26 @@ namespace Interstellar.SqlServer
 
             Visit(node.Right);
 
+            if (node.NodeType == ExpressionType.Equal)
+            {
+                Sql.Replace("= NULL", "IS NULL");
+            }
+            else if (node.NodeType == ExpressionType.NotEqual)
+            {
+                Sql.Replace("<> NULL", "IS NOT NULL");
+            }
+
             return node;
+        }
+
+        protected override Expression VisitUnary(UnaryExpression node)
+        {
+            if (SqlMappings.Operands.TryGetValue(node.NodeType, out string str))
+            {
+                Sql.Append(str);
+            }
+
+            return base.VisitUnary(node);
         }
 
         protected override Expression VisitConstant(ConstantExpression node)
@@ -158,7 +132,7 @@ namespace Interstellar.SqlServer
             }
         }
 
-        protected void PreAppendClause()
+        protected override void PreAppendClause()
         {
             if (!SqlMappings.Clauses.TryGetValue(CurrentClause, out string sqlClause))
             {
@@ -188,18 +162,25 @@ namespace Interstellar.SqlServer
             if (append)
             {
                 Sql.AppendFormat("{0} ", sqlClause);
-                if (CurrentClause == Clause.FromQuery)
+
+                if (CurrentClause == Clause.FromQuery ||
+                    CurrentClause == Clause.Exists)
                 {
                     Sql.Append('(');
                 }
             }
         }
 
-        protected void PostAppendClause()
+        protected override void PostAppendClause()
         {
-            if (CurrentClause == Clause.FromQuery)
+            switch (CurrentClause)
             {
-                Sql.Append(')');
+                case Clause.FromQuery:
+                    Sql.AppendFormat(") AS [{0}]", QueryAlias);
+                    break;
+                case Clause.Exists:
+                    Sql.Append(')');
+                    break;
             }
         }
     }

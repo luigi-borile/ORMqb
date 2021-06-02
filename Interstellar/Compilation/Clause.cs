@@ -9,6 +9,7 @@
         LeftJoin,
         RightJoin,
         FullJoin,
-        Where
+        Where,
+        Exists
     }
 }

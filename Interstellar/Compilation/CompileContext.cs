@@ -30,7 +30,7 @@ namespace Interstellar.Compilation
             Clause.From or Clause.FromQuery => _fromSql,
             Clause.Join or Clause.LeftJoin or
             Clause.RightJoin or Clause.FullJoin => _joinSql,
-            Clause.Where => _whereSql
+            Clause.Where or Clause.Exists => _whereSql
         };
 
         public CompileResult GetResult() => new CompileResult(GetSql(), Parameters);
