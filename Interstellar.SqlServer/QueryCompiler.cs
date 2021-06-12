@@ -1,27 +1,38 @@
 ﻿using Interstellar.Compilation;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 
+[assembly: CLSCompliant(true)]
+
 namespace Interstellar.SqlServer
 {
+    [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "All visit methods have not null parameter")]
     public class QueryCompiler : QueryCompilerBase
     {
         public QueryCompiler(ISchemaProvider schemaProvider)
             : base(schemaProvider)
         { }
 
+        protected override IDictionary<string, SqlClause> ClauseMappings { get; } = SqlMappings.Clauses;
+
+        protected override IDictionary<string, SqlFunction> FunctionMappings { get; } = SqlMappings.Functions;
+
         protected override Expression VisitLambda<T>(Expression<T> node)
         {
-            if (CurrentClause == Clause.From)
+            if (CurrentClause.Type == ClauseType.From)
             {
                 string tableSource = SchemaProvider.DbSchema.GetTableSource(node.Parameters[0].Type);
-                Sql.AppendFormat("{0} AS [{1}]", tableSource, node.Parameters[0].Name);
+                Sql.AppendFormat(CultureInfo.InvariantCulture, "{0} AS [{1}]", tableSource, node.Parameters[0].Name);
                 return node; //body of from clause is not necessary
             }
-            else if (CurrentClause == Clause.Join)
+            else if (CurrentClause.Type == ClauseType.Join)
             {
                 string tableSource = SchemaProvider.DbSchema.GetTableSource(node.Parameters[1].Type);
-                Sql.AppendFormat("{0} AS [{1}] ON ", tableSource, node.Parameters[1].Name);
+                Sql.AppendFormat(CultureInfo.InvariantCulture, "{0} AS [{1}] ON ", tableSource, node.Parameters[1].Name);
             }
 
             return Visit(node.Body);
@@ -46,44 +57,29 @@ namespace Interstellar.SqlServer
 
         protected override Expression VisitParameter(ParameterExpression node)
         {
-            Sql.AppendFormat("[{0}].", node.Name);
+            Sql.AppendFormat(CultureInfo.InvariantCulture, "[{0}].", node.Name);
 
             return node;
         }
 
         protected override Expression VisitBinary(BinaryExpression node)
         {
+            Sql.Append('(');
             Visit(node.Left);
 
-            if (SqlMappings.Operands.TryGetValue(node.NodeType, out string operand))
-            {
-                Sql.AppendFormat(" {0} ", operand);
-            }
-            else
-            {
-                throw new QueryCompilerException($"No SQL mapping found for node type '{node.NodeType}'");
-            }
+            string operand = GetOperand(node);
+            Sql.AppendFormat(CultureInfo.InvariantCulture, " {0} ", operand);
 
             Visit(node.Right);
-
-            if (node.NodeType == ExpressionType.Equal)
-            {
-                Sql.Replace("= NULL", "IS NULL");
-            }
-            else if (node.NodeType == ExpressionType.NotEqual)
-            {
-                Sql.Replace("<> NULL", "IS NOT NULL");
-            }
+            Sql.Append(')');
 
             return node;
         }
 
         protected override Expression VisitUnary(UnaryExpression node)
         {
-            if (SqlMappings.Operands.TryGetValue(node.NodeType, out string str))
-            {
-                Sql.Append(str);
-            }
+            string operand = GetOperand(node.NodeType);
+            Sql.AppendFormat(CultureInfo.InvariantCulture, "{0} ", operand);
 
             return base.VisitUnary(node);
         }
@@ -93,6 +89,32 @@ namespace Interstellar.SqlServer
             AddValue(node.Value);
 
             return node;
+        }
+
+        protected static string GetOperand(ExpressionType type)
+        {
+            if (SqlMappings.Operands.TryGetValue(type, out string operand))
+            {
+                return operand;
+            }
+            else
+            {
+                throw new QueryCompilerException($"No SQL mapping found for node type '{type}'");
+            }
+        }
+
+        protected static string GetOperand(BinaryExpression node)
+        {
+            //handles special null equality: IS operator instead of =
+            if ((node.NodeType == ExpressionType.Equal || node.NodeType == ExpressionType.NotEqual) &&
+                node.Right.NodeType == ExpressionType.Constant && ((ConstantExpression)node.Right).Value is null)
+            {
+                return node.NodeType == ExpressionType.Equal ? "IS" : "IS NOT";
+            }
+            else
+            {
+                return GetOperand(node.NodeType);
+            }
         }
 
         protected void AddValue(object value)
@@ -116,67 +138,43 @@ namespace Interstellar.SqlServer
 
         protected override void PreAppendClause(bool firstAppend)
         {
-            bool append = true;
-            string sqlClause;
-
             if (CurrentFunction is null)
             {
-                if (!SqlMappings.Clauses.TryGetValue(CurrentClause, out sqlClause))
+                if (!firstAppend && CurrentClause.Separator is not null)
                 {
-                    throw new QueryCompilerException($"Clause {CurrentClause} not mapped");
+                    Sql.AppendFormat(CultureInfo.InvariantCulture, "{0} ", CurrentClause.Separator);
+                }
+                else
+                {
+                    Sql.AppendFormat(CultureInfo.InvariantCulture, "{0} ", CurrentClause.Sql);
                 }
 
-                switch (CurrentClause)
+                if (CurrentClause.Pre is not null)
                 {
-                    case Clause.Select:
-                    case Clause.Where:
-                        if (!firstAppend)
-                        {
-                            append = false;
-                        }
-                        break;
-                    case Clause.From:
-                    case Clause.FromQuery:
-                        if (!firstAppend)
-                        {
-                            throw new QueryCompilerException("FROM clause specied more then once");
-                        }
-                        break;
+                    Sql.AppendFormat(CultureInfo.InvariantCulture, "{0} ", CurrentClause.Pre);
                 }
             }
             else
             {
-                if (!SqlMappings.Functions.TryGetValue(CurrentFunction.Value, out sqlClause))
-                {
-                    throw new QueryCompilerException($"Function {CurrentFunction} not mapped");
-                }
-            }
-
-            if (append)
-            {
-                Sql.AppendFormat("{0} ", sqlClause);
-
-                if (CurrentClause == Clause.FromQuery ||
-                    CurrentFunction is not null)
-                {
-                    Sql.Append('(');
-                }
-            }
-
-            if (!firstAppend && CurrentClause == Clause.Select)
-            {
-                Sql.Append(", ");
+                Sql.AppendFormat(CultureInfo.InvariantCulture, "{0}(", CurrentFunction.Sql);
             }
         }
 
         protected override void PostAppendClause()
         {
-            if (CurrentClause == Clause.FromQuery)
+            if (CurrentFunction is null)
             {
-                Sql.AppendFormat(") AS [{0}]", QueryAlias);
-            }
+                if (CurrentClause.Post is not null)
+                {
+                    Sql.AppendFormat(CultureInfo.InvariantCulture, " {0}", CurrentClause.Post);
+                }
 
-            if (CurrentFunction is not null)
+                if (CurrentClause.Type == ClauseType.FromQuery)
+                {
+                    Sql.AppendFormat(CultureInfo.InvariantCulture, " AS [{0}]", QueryAlias);
+                }
+            }
+            else
             {
                 Sql.Append(')');
             }

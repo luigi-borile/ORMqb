@@ -19,6 +19,16 @@ namespace Interstellar.Schema
 
         public ForeignKeyBuilder<TPrimary, TForeign> Column(Expression<Func<TPrimary, object>> property, Expression<Func<TForeign, object>> foreignKey)
         {
+            if (property is null)
+            {
+                throw new ArgumentNullException(nameof(property));
+            }
+
+            if (foreignKey is null)
+            {
+                throw new ArgumentNullException(nameof(foreignKey));
+            }
+
             MemberInfo? propMember = property.GetMember();
             if (propMember is null)
             {

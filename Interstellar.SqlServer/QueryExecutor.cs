@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace Interstellar.SqlServer
@@ -72,6 +73,11 @@ namespace Interstellar.SqlServer
 
         public override async Task<TResult> GetAsync<TResult>(CompileResult compileResult)
         {
+            if (compileResult is null)
+            {
+                throw new ArgumentNullException(nameof(compileResult));
+            }
+
             bool opened = await EnsureOpenedAsync().ConfigureAwait(false);
 
             try
@@ -102,6 +108,11 @@ namespace Interstellar.SqlServer
 
         public override async Task<IEnumerable<TResult>> GetManyAsync<TResult>(CompileResult compileResult)
         {
+            if (compileResult is null)
+            {
+                throw new ArgumentNullException(nameof(compileResult));
+            }
+
             bool opened = await EnsureOpenedAsync().ConfigureAwait(false);
 
             try
@@ -119,7 +130,7 @@ namespace Interstellar.SqlServer
                     {
                         result.Add(mapFunc(reader));
                     }
-                }).ConfigureAwait(false);
+                }, default, TaskCreationOptions.None, TaskScheduler.Current).ConfigureAwait(false);
 
                 return result;
             }
@@ -153,6 +164,11 @@ namespace Interstellar.SqlServer
 
         protected virtual SqlParameter MapParameter(QueryParameter parameter)
         {
+            if (parameter is null)
+            {
+                throw new ArgumentNullException(nameof(parameter));
+            }
+
             var sqlParameter = new SqlParameter(parameter.Name, parameter.Value ?? DBNull.Value);
 
             if (parameter.Size.HasValue)
@@ -163,6 +179,7 @@ namespace Interstellar.SqlServer
             return sqlParameter;
         }
 
+        [SuppressMessage("Security", "CA2100:Review SQL queries for security vulnerabilities", Justification = "Command text is created throught IQueryCompiler")]
         private SqlCommand GetCommand(CompileResult compileResult)
         {
             SqlCommand command = _connection.CreateCommand();

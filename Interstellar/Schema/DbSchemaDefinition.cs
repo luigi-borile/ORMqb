@@ -24,6 +24,11 @@ namespace Interstellar.Schema
 
         public string GetTableSource(Type type)
         {
+            if (type is null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             if (DbObjects.TryGetValue(type, out DbObjectDefinition definition))
             {
                 return definition.Source;
@@ -33,6 +38,11 @@ namespace Interstellar.Schema
 
         public string GetColumnName(MemberInfo member)
         {
+            if (member is null)
+            {
+                throw new ArgumentNullException(nameof(member));
+            }
+
             if (DbObjects.TryGetValue(member.DeclaringType, out DbObjectDefinition definition) &&
                 definition.Columns.TryGetValue(member.Name, out string column))
             {

@@ -1,6 +1,6 @@
 ﻿namespace Interstellar.Compilation
 {
-    public enum Clause
+    public enum ClauseType
     {
         Select,
         From,
@@ -9,6 +9,9 @@
         LeftJoin,
         RightJoin,
         FullJoin,
-        Where
+        Where,
+        Having,
+        GroupBy,
+        OrderBy
     }
 }

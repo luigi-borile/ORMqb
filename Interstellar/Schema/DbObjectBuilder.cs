@@ -49,6 +49,16 @@ namespace Interstellar.Schema
 
         public DbObjectBuilder<T> Column(Expression<Func<T, object>> property, string name)
         {
+            if (property is null)
+            {
+                throw new ArgumentNullException(nameof(property));
+            }
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
             MemberInfo? member = property.GetMember();
             if (member is null)
             {

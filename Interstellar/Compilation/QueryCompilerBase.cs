@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -7,13 +8,13 @@ using System.Text;
 
 namespace Interstellar.Compilation
 {
+    [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "All visit methods have not null parameter")]
     public abstract class QueryCompilerBase : ExpressionVisitor, IQueryCompiler
     {
         private CompileContext? _context;
         private byte _deepLevel;
-        protected static readonly IEnumerable<string> _clauses = Enum.GetNames(typeof(Clause));
 
-        public QueryCompilerBase(ISchemaProvider schemaProvider)
+        protected QueryCompilerBase(ISchemaProvider schemaProvider)
         {
             SchemaProvider = schemaProvider ?? throw new ArgumentNullException(nameof(schemaProvider));
         }
@@ -24,7 +25,7 @@ namespace Interstellar.Compilation
 
         protected string? QueryAlias { get; private set; }
 
-        protected Clause CurrentClause
+        protected SqlClause CurrentClause
         {
             get
             {
@@ -33,7 +34,7 @@ namespace Interstellar.Compilation
                     throw new InvalidOperationException($"Cannot use {nameof(CurrentClause)} before calling {nameof(Compile)}");
                 }
 
-                return _context.Clause;
+                return _context.Clause ?? throw new InvalidOperationException($"Cannot use {nameof(CurrentClause)} before setting it");
             }
             set
             {
@@ -46,7 +47,7 @@ namespace Interstellar.Compilation
             }
         }
 
-        protected Function? CurrentFunction
+        protected SqlFunction? CurrentFunction
         {
             get
             {
@@ -84,7 +85,7 @@ namespace Interstellar.Compilation
             }
         }
 
-        protected List<QueryParameter> Parameters
+        protected ICollection<QueryParameter> Parameters
         {
             get
             {
@@ -96,6 +97,9 @@ namespace Interstellar.Compilation
                 return _context.Parameters;
             }
         }
+
+        protected abstract IDictionary<string, SqlClause> ClauseMappings { get; }
+        protected abstract IDictionary<string, SqlFunction> FunctionMappings { get; }
 
         protected abstract void PreAppendClause(bool firstAppend);
         protected abstract void PostAppendClause();
@@ -150,6 +154,12 @@ namespace Interstellar.Compilation
 
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
+            if (node.Object != null &&
+                node.Object.NodeType != ExpressionType.Parameter)
+            {
+                Visit(node.Object);
+            }
+
             SetClause(node);
             PreAppendClause(_context!.FirstAppend);
 
@@ -162,8 +172,8 @@ namespace Interstellar.Compilation
 
                 Expression? arg = node.Arguments[i];
 
-                if (CurrentClause == Clause.FromQuery ||
-                    CurrentFunction == Function.Exists)
+                if (CurrentClause.IsSubQuery ||
+                    CurrentFunction?.IsSubQuery == true)
                 {
                     CompileResult result = Compile(arg);
                     Sql.Append(result.Sql);
@@ -174,41 +184,28 @@ namespace Interstellar.Compilation
                 }
             }
 
-            SetClause(node);
             PostAppendClause();
 
             CurrentParameterType = null;
             CurrentParameterName = null;
-
-            if (node.Object != null &&
-                node.Object.NodeType != ExpressionType.Parameter)
-            {
-                Visit(node.Object);
-            }
+            CurrentFunction = null;
 
             return node;
         }
 
         private void SetClause(MethodCallExpression node)
         {
-            if (typeof(SqlFunctions).IsAssignableFrom(node.Method.DeclaringType))
+            if (ClauseMappings.TryGetValue(node.Method.Name, out SqlClause clause))
             {
-                if (!Enum.TryParse(node.Method.Name, out Function function))
-                {
-                    throw new QueryCompilerException($"Function {node.Method.Name} not supported");
-                }
-
+                CurrentClause = clause;
+            }
+            else if (FunctionMappings.TryGetValue(node.Method.Name, out SqlFunction function))
+            {
                 CurrentFunction = function;
             }
             else
             {
-                if (!Enum.TryParse(node.Method.Name, out Clause clause))
-                {
-                    throw new QueryCompilerException($"Clause {node.Method.Name} not supported");
-                }
-
-                CurrentClause = clause;
-                CurrentFunction = null;
+                throw new QueryCompilerException($"Method {node.Method.Name} not supported");
             }
         }
     }

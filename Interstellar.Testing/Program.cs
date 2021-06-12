@@ -9,6 +9,7 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Diagnostics.Windows;
 using BenchmarkDotNet.Running;
+using System;
 #endif
 
 namespace Interstellar.Testing
@@ -51,32 +52,20 @@ namespace Interstellar.Testing
             IQueryExecutor executor = new QueryExecutor("Data Source =.\\; Initial Catalog = EasyStock_Dev; User ID = sa; Password = m4dl4b2013;");
             IQueryFactory factory = new QueryFactory(compiler, executor);
 
-            //IEnumerable<Result> result1 = await factory.GetManyAsync<Result>(q => q
-            //    .From<SaldoTestata>(st => st)
-            //    .Select<SaldoTestata, string>(st => "xx" + st.Stabilimento, r => r.Stabilimento)
-            //);
+            IEnumerable<Result2> result1 = await factory.GetManyAsync<Result2>(q => q
+                .From<SaldoDettaglio>(sd => sd)
+                .Select<SaldoDettaglio, decimal>(sd => Sql.Sum(() => sd.QtPezzi), r => r.Sum)
+                .Select<SaldoDettaglio, decimal>(sd => Sql.Average(() => sd.QtPezzi), r => r.Cnt)
+                .Select<SaldoDettaglio, decimal>(sd => Sql.Min(() => sd.QtPezzi), r => r.Min)
+                .Select<SaldoDettaglio, decimal>(sd => Sql.Max(() => sd.QtPezzi), r => r.Max)
+            );
 
-            //IEnumerable<Result> result = await factory.GetManyAsync<Result>(q => q
-            //.Select<Result, string>(inner => inner.Progressivo, r => r.Progressivo)
-            //.FromQuery<Result>(inner => inner
-            //    .Select<SaldoTestata, string>(st => "Stab:" + st.Stabilimento, r => r.Stabilimento)
-            //    .Select<SaldoTestata, string>(st => "Maga:" + st.Magazzino, r => r.Magazzino)
-            //    .Select<SaldoTestata, string>(st => st.Progressivo, r => r.Progressivo)
-            //    .Select<SaldoDettaglio, decimal>(sd => sd.QtPezzi, r => r.QtPezzi)
-            //    .From<SaldoTestata>(st => st)
-            //    .Join<SaldoTestata, SaldoDettaglio>((st, sd) =>
-            //        st.Stabilimento == sd.Stabilimento &&
-            //        st.Magazzino == sd.Magazzino &&
-            //        st.Progressivo == sd.Progressivo)
-            //    .Where<SaldoDettaglio>(sd => sd.IdLotto != 1)
-            //    )
-            //);
-
-
-            IEnumerable<Result> result2 = await factory.GetManyAsync<Result>(q => q
-                .Select<SaldoTestata, decimal>(st => SqlFunctions.Count(() => st.Progressivo), r => r.QtPezzi)
+            IEnumerable<Result2> result2 = await factory.GetManyAsync<Result2>(q => q
+               .Select<SaldoTestata, string>(st => st.Stabilimento, r => r.Stabilimento)
+               .Select<SaldoTestata, string>(st => st.Magazzino, r => r.Magazzino)
+               .Select<SaldoTestata, decimal>(st => Sql.Count(() => st.Progressivo), r => r.Cnt)
                 .From<SaldoTestata>(st => st)
-                .Where<SaldoTestata>(w => SqlFunctions.Exists(e => e
+                .Where<SaldoTestata>(w => !Sql.Exists(e => e
                     .Select(1)
                     .From<SaldoDettaglio>(sd => sd)
                     .Where<SaldoTestata, SaldoDettaglio>((st, sd) =>
@@ -85,6 +74,10 @@ namespace Interstellar.Testing
                         st.Progressivo == sd.Progressivo)
                     )
                 )
+                .GroupBy<SaldoTestata>(st => st.Stabilimento)
+                .GroupBy<SaldoTestata>(st => st.Magazzino)
+                .OrderByDesc<SaldoTestata>(st => st.Stabilimento)
+                .OrderBy<SaldoTestata>(st => st.Magazzino)
             );
 
             //IEnumerable<Result2> result = await factory.GetManyAsync<Result2>(q => q
@@ -122,6 +115,12 @@ namespace Interstellar.Testing
 
         private class Result2
         {
+            public string Stabilimento { get; set; }
+            public string Magazzino { get; set; }
+            public decimal Cnt { get; set; }
+            public decimal Sum { get; set; }
+            public decimal Min { get; set; }
+            public decimal Max { get; set; }
         }
     }
 }

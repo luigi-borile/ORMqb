@@ -20,6 +20,11 @@ namespace Interstellar.Execution
 
         protected static Func<IDataReader, TResult> GetMapFunc<TResult>(IDataReader dataReader)
         {
+            if (dataReader is null)
+            {
+                throw new ArgumentNullException(nameof(dataReader));
+            }
+
             var exps = new List<Expression>();
 
             ParameterExpression paramExp = Expression.Parameter(typeof(IDataRecord), "o7thDR");
@@ -31,14 +36,15 @@ namespace Interstellar.Execution
             PropertyInfo indexerInfo = typeof(IDataRecord).GetProperty("Item", new[] { typeof(int) });
 
             var columnNames = Enumerable.Range(0, dataReader.FieldCount)
-                .Select(i => new { i, name = dataReader.GetName(i) })
+                .Select(i => new { i, Name = dataReader.GetName(i) })
                 .ToArray();
+
+            PropertyInfo[]? targetProperties = targetExp.Type.GetProperties(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
 
             foreach (var column in columnNames)
             {
-                PropertyInfo property = targetExp.Type.GetProperty(
-                    column.name,
-                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                PropertyInfo property = targetProperties.FirstOrDefault(p => p.Name == column.Name);
                 if (property == null)
                 {
                     continue;
