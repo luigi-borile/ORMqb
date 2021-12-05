@@ -8,7 +8,6 @@ namespace ORMqb.Schema
     {
         internal DbSchemaDefinition(
             IReadOnlyList<DbObjectDefinition> dbObjects,
-            IReadOnlyList<ForeignKeyDefinition> foreignKeys,
             IReadOnlyList<StoredProcedureDefinition> storedProcedures)
         {
             var objects = new Dictionary<Type, DbObjectDefinition>();
@@ -31,13 +30,10 @@ namespace ORMqb.Schema
             }
 
             DbObjects = objects;
-            ForeignKeys = foreignKeys;
             StoredProcedures = procedures;
         }
 
         public IReadOnlyDictionary<Type, DbObjectDefinition> DbObjects { get; }
-
-        public IReadOnlyList<ForeignKeyDefinition> ForeignKeys { get; }
 
         public IReadOnlyDictionary<Type, StoredProcedureDefinition> StoredProcedures { get; }
 
@@ -69,18 +65,5 @@ namespace ORMqb.Schema
             }
             return member.Name;
         }
-
-        //public DbObjectDefinition GetDefinition(Type type)
-        //{
-        //    if (!TryGetDefinition(type, out DbObjectDefinition definition))
-        //    {
-        //        throw new InvalidOperationException($"No definition found for type {type}");
-        //    }
-
-        //    return definition;
-        //}
-
-        //public bool TryGetDefinition(Type type, out DbObjectDefinition definition) =>
-        //    DbObjects.TryGetValue(type, out definition);
     }
 }

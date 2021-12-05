@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ORMqb
 {
-    public sealed record CompileResult
+    public sealed class CompileResult
     {
         public CompileResult(string sql)
             : this(sql, null)

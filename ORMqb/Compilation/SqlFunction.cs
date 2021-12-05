@@ -1,6 +1,6 @@
 ﻿namespace ORMqb.Compilation
 {
-    public sealed record SqlFunction
+    public sealed class SqlFunction
     {
         public SqlFunction(string sql, bool isSubQuery)
         {

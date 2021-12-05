@@ -43,14 +43,6 @@ namespace ORMqb.Testing
                     .Column(x => x.TipoArticolo, "TIPO_ARTI"));
 
             builder
-                .ForeignKey<SaldoTestata, SaldoDettaglio>(b => b
-                    .Column(sd => sd.Stabilimento, st => st.Stabilimento)
-                    .Column(sd => sd.Magazzino, st => st.Magazzino)
-                    .Column(sd => sd.Progressivo, st => st.Progressivo))
-                .ForeignKey<Articolo, SaldoDettaglio>(b => b
-                    .Column(a => a.CodiceArticolo, sd => sd.Articolo));
-
-            builder
                 .StoredProcedure<SpGetProgressivo>(b => b
                     .Source("dbo.GetProgressivo")
                     .Parameter(x => x.Stabilimento, "@stab")
@@ -64,14 +56,14 @@ namespace ORMqb.Testing
             IQueryExecutor executor = new QueryExecutor("Data Source =.\\; Initial Catalog = EasyStock_Dev; User ID = sa; Password = m4dl4b2013;");
             IQueryFactory factory = new QueryFactory(compiler, executor);
 
-            var sp = new SpGetProgressivo
-            {
-                Stabilimento = "MAD",
-                Magazzino = "000",
-                Anno = 2020,
-                Caso = "PLT"
-            };
-            int resultCode = await factory.ExecAsync(sp);
+            //var sp = new SpGetProgressivo
+            //{
+            //    Stabilimento = "MAD",
+            //    Magazzino = "000",
+            //    Anno = 2020,
+            //    Caso = "PLT"
+            //};
+            //int resultCode = await factory.ExecAsync(sp);
 
             IEnumerable<Result2> result1 = await factory.GetManyAsync<Result2>(q => q
                 .From<SaldoDettaglio>(sd => sd)

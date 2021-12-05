@@ -1,6 +1,6 @@
 ﻿namespace ORMqb.Compilation
 {
-    public sealed record SqlClause
+    public sealed class SqlClause
     {
         public SqlClause(
             ClauseType type,

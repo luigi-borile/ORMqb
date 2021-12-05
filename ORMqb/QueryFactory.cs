@@ -38,7 +38,7 @@ namespace ORMqb
 
         public Task<int> ExecAsync<T>(T storedProcedure)
         {
-            CompileResult compileResult = Compiler.Compile(storedProcedure);
+            CompileResult compileResult = Compiler.CompileSp(storedProcedure);
 
             return Executor.ExecAsync(compileResult);
         }

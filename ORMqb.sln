@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ORMqb.SqlServer.Tests", "ORMqb.SqlServer.Tests\ORMqb.SqlServer.Tests.csproj", "{1DE9BE2D-9B1E-4CF2-8ECA-A9C9A36E5933}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{C52C1483-8755-4627-99F4-5A71B37CC623}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C52C1483-8755-4627-99F4-5A71B37CC623}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C52C1483-8755-4627-99F4-5A71B37CC623}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DE9BE2D-9B1E-4CF2-8ECA-A9C9A36E5933}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DE9BE2D-9B1E-4CF2-8ECA-A9C9A36E5933}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DE9BE2D-9B1E-4CF2-8ECA-A9C9A36E5933}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DE9BE2D-9B1E-4CF2-8ECA-A9C9A36E5933}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

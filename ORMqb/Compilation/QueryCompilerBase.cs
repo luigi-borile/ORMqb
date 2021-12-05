@@ -153,7 +153,7 @@ namespace ORMqb.Compilation
             return result;
         }
 
-        public virtual CompileResult Compile<T>(T storedProcedure)
+        public virtual CompileResult CompileSp<T>(T storedProcedure)
         {
             Type type = typeof(T);
             if (!SchemaProvider.DbSchema.StoredProcedures.TryGetValue(type, out StoredProcedureDefinition spSchema))

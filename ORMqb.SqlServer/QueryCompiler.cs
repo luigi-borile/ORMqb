@@ -50,7 +50,7 @@ namespace ORMqb.Compilation.SqlServer
             }
 
             string columnName = SchemaProvider.DbSchema.GetColumnName(node.Member);
-            Sql.Append(columnName);
+            Sql.AppendFormat(CultureInfo.InvariantCulture, "[{0}]", columnName);
 
             return node;
         }

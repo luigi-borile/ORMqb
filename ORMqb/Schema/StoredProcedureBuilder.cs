@@ -62,7 +62,7 @@ namespace ORMqb.Schema
             return this;
         }
 
-        private void AddParameter(Expression<Func<T, object>> property, string name, ParameterDirection direction)
+        private void AddParameter(Expression<Func<T, object>> property, string name, in ParameterDirection direction)
         {
             if (property is null)
             {

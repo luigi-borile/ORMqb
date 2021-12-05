@@ -45,14 +45,6 @@ namespace ORMqb.Testing
                     .Column(x => x.Descrizione, "DSCR")
                     .Column(x => x.TipoArticolo, "TIPO_ARTI"));
 
-            builder
-                .ForeignKey<SaldoTestata, SaldoDettaglio>(b => b
-                    .Column(sd => sd.Stabilimento, st => st.Stabilimento)
-                    .Column(sd => sd.Magazzino, st => st.Magazzino)
-                    .Column(sd => sd.Progressivo, st => st.Progressivo))
-                .ForeignKey<Articolo, SaldoDettaglio>(b => b
-                    .Column(a => a.CodiceArticolo, sd => sd.Articolo));
-
             _compiler = new QueryCompiler(builder);
             _executor = new QueryExecutor("Data Source =.\\; Initial Catalog = EasyStock_Dev; User ID = sa; Password = m4dl4b2013;");
             _factory = new QueryFactory(_compiler, _executor);
