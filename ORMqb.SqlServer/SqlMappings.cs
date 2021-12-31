@@ -29,6 +29,7 @@ namespace ORMqb.SqlServer
             {
                 new("Exists", new SqlFunction("EXISTS", true)),
                 new("Count", new SqlFunction("COUNT", false)),
+                new("CountBig", new SqlFunction("COUNT_BIG", false)),
                 new("Average", new SqlFunction("AVG", false)),
                 new("Sum", new SqlFunction("SUM", false)),
                 new("Min", new SqlFunction("MIN", false)),

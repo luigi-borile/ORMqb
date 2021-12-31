@@ -65,40 +65,41 @@ namespace ORMqb.Testing
             //};
             //int resultCode = await factory.ExecAsync(sp);
 
-            IEnumerable<Result2> result1 = await factory.GetManyAsync<Result2>(q => q
-                .From<SaldoDettaglio>(sd => sd)
-                .Select<SaldoDettaglio, decimal>(sd => SqlFn.Sum(() => sd.QtPezzi), r => r.Sum)
-                .Select<SaldoDettaglio, decimal>(sd => SqlFn.Average(() => sd.QtPezzi), r => r.Cnt)
-                .Select<SaldoDettaglio, decimal>(sd => SqlFn.Min(() => sd.QtPezzi), r => r.Min)
-                .Select<SaldoDettaglio, decimal>(sd => SqlFn.Max(() => sd.QtPezzi), r => r.Max)
-            );
-
-            IEnumerable<Result> ress = await factory.GetManyAsync<Result>(q => q
-                .From<SaldoDettaglio>(sd => sd)
-                .Select<SaldoDettaglio, string>(sd => sd.Stabilimento, r => r.Stabilimento)
-                .Select<SaldoDettaglio, string>(sd => sd.Magazzino, r => r.Magazzino)
-                .Select<SaldoDettaglio, string>(sd => sd.Progressivo, r => r.Progressivo)
-                .Select<SaldoDettaglio, decimal>(sd => sd.QtPezzi, r => r.QtPezzi));
-
-            //IEnumerable<Result2> result2 = await factory.GetManyAsync<Result2>(q => q
-            //   .Select<SaldoTestata, string>(st => st.Stabilimento, r => r.Stabilimento)
-            //   .Select<SaldoTestata, string>(st => st.Magazzino, r => r.Magazzino)
-            //   .Select<SaldoTestata, decimal>(st => Sql.Count(() => st.Progressivo), r => r.Cnt)
-            //    .From<SaldoTestata>(st => st)
-            //    .Where<SaldoTestata>(w => !Sql.Exists(e => e
-            //        .Select(1)
-            //        .From<SaldoDettaglio>(sd => sd)
-            //        .Where<SaldoTestata, SaldoDettaglio>((st, sd) =>
-            //            st.Stabilimento == sd.Stabilimento &&
-            //            st.Magazzino == sd.Magazzino &&
-            //            st.Progressivo == sd.Progressivo)
-            //        )
-            //    )
-            //    .GroupBy<SaldoTestata>(st => st.Stabilimento)
-            //    .GroupBy<SaldoTestata>(st => st.Magazzino)
-            //    .OrderByDesc<SaldoTestata>(st => st.Stabilimento)
-            //    .OrderBy<SaldoTestata>(st => st.Magazzino)
+            //IEnumerable<Result2> result1 = await factory.GetManyAsync<Result2>(q => q
+            //    .From<SaldoDettaglio>(sd => sd)
+            //    .Select<SaldoDettaglio, decimal>(sd => SqlFn.Sum(() => sd.QtPezzi), r => r.Sum)
+            //    .Select<SaldoDettaglio, decimal>(sd => SqlFn.Average(() => sd.QtPezzi), r => r.Cnt)
+            //    .Select<SaldoDettaglio, decimal>(sd => SqlFn.Min(() => sd.QtPezzi), r => r.Min)
+            //    .Select<SaldoDettaglio, decimal>(sd => SqlFn.Max(() => sd.QtPezzi), r => r.Max)
             //);
+
+            //IEnumerable<Result> ress = await factory.GetManyAsync<Result>(q => q
+            //    .From<SaldoDettaglio>(sd => sd)
+            //    .Select<SaldoDettaglio, string>(sd => sd.Stabilimento, r => r.Stabilimento)
+            //    .Select<SaldoDettaglio, string>(sd => sd.Magazzino, r => r.Magazzino)
+            //    .Select<SaldoDettaglio, string>(sd => sd.Progressivo, r => r.Progressivo)
+            //    .Select<SaldoDettaglio, decimal>(sd => sd.QtPezzi, r => r.QtPezzi));
+
+            IEnumerable<Result2> result2 = await factory.GetManyAsync<Result2>(q => q
+                .Select<SaldoTestata, string>(st => st.Stabilimento, r => r.Stabilimento)
+                .Select<SaldoTestata, string>(st => st.Magazzino, r => r.Magazzino)
+                .Select<SaldoTestata, int>(st => SqlFn.Count(() => st.Progressivo), r => r.Cnt)
+                .Select<SaldoTestata, long>(st => SqlFn.CountBig(() => st.Progressivo), r => r.CntBig)
+                .From<SaldoTestata>(st => st)
+                .Where<SaldoTestata>(w => !SqlFn.Exists(e => e
+                    .Select(1)
+                    .From<SaldoDettaglio>(sd => sd)
+                    .Where<SaldoTestata, SaldoDettaglio>((st, sd) =>
+                        st.Stabilimento == sd.Stabilimento &&
+                        st.Magazzino == sd.Magazzino &&
+                        st.Progressivo == sd.Progressivo)
+                    )
+                )
+                .GroupBy<SaldoTestata>(st => st.Stabilimento)
+                .GroupBy<SaldoTestata>(st => st.Magazzino)
+                .OrderByDesc<SaldoTestata>(st => st.Stabilimento)
+                .OrderBy<SaldoTestata>(st => st.Magazzino)
+            );
 
             //IEnumerable<Result2> result = await factory.GetManyAsync<Result2>(q => q
             //    .Select<Result, string>(r => r.Stabilimento, r => r.Progressivo)
@@ -137,7 +138,8 @@ namespace ORMqb.Testing
         {
             public string Stabilimento { get; set; }
             public string Magazzino { get; set; }
-            public decimal Cnt { get; set; }
+            public int Cnt { get; set; }
+            public long CntBig { get; set; }
             public decimal Sum { get; set; }
             public decimal Min { get; set; }
             public decimal Max { get; set; }

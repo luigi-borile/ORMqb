@@ -78,8 +78,11 @@ namespace ORMqb.Compilation.SqlServer
 
         protected override Expression VisitUnary(UnaryExpression node)
         {
-            string operand = GetOperand(node.NodeType);
-            Sql.AppendFormat(CultureInfo.InvariantCulture, "{0} ", operand);
+            if (node.Method is null || !node.Method.IsSpecialName)
+            {
+                string operand = GetOperand(node.NodeType);
+                Sql.AppendFormat(CultureInfo.InvariantCulture, "{0} ", operand);
+            }
 
             return base.VisitUnary(node);
         }

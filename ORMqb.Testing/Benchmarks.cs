@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ORMqb.Testing
 {
-    [SimpleJob(RuntimeMoniker.NetCoreApp50, baseline: true)]
+    [SimpleJob(RuntimeMoniker.Net50, baseline: true)]
     //[SimpleJob(RuntimeMoniker.NetCoreApp31)]
     //[SimpleJob(RuntimeMoniker.Net48)]
     public class Benchmarks
